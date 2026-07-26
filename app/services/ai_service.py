@@ -6,10 +6,18 @@ from app.models.schemas import ParsedResume
 
 load_dotenv()
 
-client = Groq(api_key=os.getenv("GROQ_API_KEY"))
+# Client ko function ke andar banayenge taake import time par crash na ho
+def get_groq_client():
+    api_key = os.getenv("GROQ_API_KEY")
+    if not api_key:
+        raise ValueError("GROQ_API_KEY environment variable is not set!")
+    return Groq(api_key=api_key)
 
 def parse_resume_with_ai(resume_text: str) -> ParsedResume:
     """Use Groq AI to parse resume text into structured data"""
+    
+    # Yahan client initialize karein
+    client = get_groq_client()
     
     prompt = f"""
     You are a resume parser. Extract the following information from this resume text:
@@ -53,7 +61,6 @@ def parse_resume_with_ai(resume_text: str) -> ParsedResume:
     
     except Exception as e:
         print(f"AI parsing error: {e}")
-        # Fallback to basic extraction if AI fails
         return extract_basic_info(resume_text)
 
 def extract_basic_info(text: str) -> ParsedResume:
