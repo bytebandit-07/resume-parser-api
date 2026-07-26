@@ -9,7 +9,7 @@
 <body>
     <div class="container">
         <header>
-            <h1>🤖 AI Resume Parser</h1>
+            <h1> AI Resume Parser</h1>
             <p>Upload your resume (PDF/Word) and extract structured information using AI</p>
         </header>
 
@@ -47,17 +47,17 @@
         </div>
 
         <div class="result-section" id="resultSection" style="display: none;">
-            <h2>📋 Parsed Information</h2>
+            <h2> Parsed Information</h2>
             <div class="result-grid">
                 <div class="result-card">
-                    <h4>👤 Personal Info</h4>
+                    <h4> Personal Info</h4>
                     <p><strong>Name:</strong> <span id="resName">-</span></p>
                     <p><strong>Email:</strong> <span id="resEmail">-</span></p>
                     <p><strong>Phone:</strong> <span id="resPhone">-</span></p>
                 </div>
 
                 <div class="result-card">
-                    <h4>💼 Experience</h4>
+                    <h4> Experience</h4>
                     <p><strong>Total Years:</strong> <span id="resExperience">-</span></p>
                     <p><strong>Summary:</strong> <span id="resSummary">-</span></p>
                 </div>
@@ -68,13 +68,13 @@
                 </div>
 
                 <div class="result-card full-width">
-                    <h4>🎓 Education</h4>
+                    <h4> Education</h4>
                     <ul id="resEducation"></ul>
                 </div>
             </div>
 
             <div class="raw-json">
-                <h4>📄 Raw JSON Data</h4>
+                <h4> Raw JSON Data</h4>
                 <pre id="rawJson"></pre>
                 <button class="btn-secondary" onclick="copyJson()">Copy JSON</button>
             </div>
@@ -83,7 +83,7 @@
         </div>
 
         <div class="error-section" id="errorSection" style="display: none;">
-            <h3>❌ Error</h3>
+            <h3> Error</h3>
             <p id="errorMessage"></p>
             <button class="btn-secondary" onclick="resetError()">Try Again</button>
         </div>
