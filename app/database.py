@@ -1,6 +1,7 @@
 from sqlmodel import SQLModel, create_engine, Session
 
-DATABASE_URL = "sqlite:///./resumes.db"
+# In-memory database for Vercel serverless deployment
+DATABASE_URL = "sqlite:///:memory:"
 
 engine = create_engine(DATABASE_URL, echo=False)
 
