@@ -1,17 +1,13 @@
 import os
 from sqlmodel import create_engine, SQLModel
 
-# Vercel automatically sets the "VERCEL" environment variable.
-# We use this to check if the app is in production or running locally.
-if os.environ.get("VERCEL"):
-    # Write to the temporary folder allowed by Vercel
-    sqlite_file_name = "/tmp/resume_database.db"
+# Agar Vercel par hai toh In-Memory DB use karo (no files created)
+if os.environ.get("VERCEL") or os.environ.get("VERCEL_ENV"):
+    sqlite_url = "sqlite:///:memory:"
 else:
-    # Write to the local folder for your own development
+    # Local development ke liye file banayega
     sqlite_file_name = "resume_database.db"
-
-# Note the triple slashes for the URL format
-sqlite_url = f"sqlite:///{sqlite_file_name}"
+    sqlite_url = f"sqlite:///{sqlite_file_name}"
 
 connect_args = {"check_same_thread": False}
 engine = create_engine(sqlite_url, connect_args=connect_args)
