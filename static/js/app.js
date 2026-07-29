@@ -34,9 +34,7 @@ fileInput.addEventListener('change', (e) => {
 });
 
 function handleFile(file) {
-    const validTypes = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
     const validExtensions = ['.pdf', '.docx'];
-    
     const fileExtension = '.' + file.name.split('.').pop().toLowerCase();
     
     if (!validExtensions.includes(fileExtension)) {
@@ -55,16 +53,47 @@ function handleFile(file) {
     document.getElementById('dropZone').style.display = 'none';
 }
 
-{
-  "rewrites": [
-    { "source": "/(.*)", "destination": "/api/index.py" }
-  ],
-  "functions": {
-    "api/index.py": {
-      "maxDuration": 60
+async function uploadResume() {
+    if (!selectedFile) {
+        showError('Please select a file first');
+        return;
     }
-  }
+    
+    showLoading();
+    
+    const formData = new FormData();
+    formData.append('file', selectedFile);
+    
+    try {
+        const response = await fetch('/resume/parse-file', {
+            method: 'POST',
+            body: formData
+        });
+        
+        const responseText = await response.text();
+        
+        if (!response.ok) {
+            let errorMsg = 'Server error (' + response.status + ')';
+            try {
+                const errorJson = JSON.parse(responseText);
+                if (errorJson.detail) {
+                    errorMsg = errorJson.detail;
+                }
+            } catch (e) {
+                if (responseText) {
+                    errorMsg = responseText.substring(0, 200);
+                }
+            }
+            throw new Error(errorMsg);
+        }
+        
+        const data = JSON.parse(responseText);
+        displayResult(data);
+    } catch (error) {
+        showError(error.message || 'Something went wrong');
+    }
 }
+
 async function parseText() {
     const text = document.getElementById('resumeText').value.trim();
     
@@ -81,18 +110,22 @@ async function parseText() {
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded'
             },
-            body: `text=${encodeURIComponent(text)}`
+            body: 'text=' + encodeURIComponent(text)
         });
         
         const responseText = await response.text();
         
         if (!response.ok) {
-            let errorMsg = `Server error (${response.status})`;
+            let errorMsg = 'Server error (' + response.status + ')';
             try {
                 const errorJson = JSON.parse(responseText);
-                errorMsg = errorJson.detail || errorMsg;
-            } catch {
-                errorMsg = responseText.substring(0, 200) || errorMsg;
+                if (errorJson.detail) {
+                    errorMsg = errorJson.detail;
+                }
+            } catch (e) {
+                if (responseText) {
+                    errorMsg = responseText.substring(0, 200);
+                }
             }
             throw new Error(errorMsg);
         }
@@ -103,6 +136,7 @@ async function parseText() {
         showError(error.message || 'Something went wrong');
     }
 }
+
 function displayResult(data) {
     document.getElementById('loading').style.display = 'none';
     document.getElementById('resultSection').style.display = 'block';
@@ -113,8 +147,9 @@ function displayResult(data) {
     document.getElementById('resPhone').textContent = data.parsed_data.phone || 'Not found';
     
     // Experience
-    document.getElementById('resExperience').textContent = data.parsed_data.experience_years ? 
-        data.parsed_data.experience_years + ' years' : 'Not found';
+    document.getElementById('resExperience').textContent = data.parsed_data.experience_years 
+        ? data.parsed_data.experience_years + ' years' 
+        : 'Not found';
     document.getElementById('resSummary').textContent = data.parsed_data.summary || 'Not found';
     
     // Skills
