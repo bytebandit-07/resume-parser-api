@@ -2,20 +2,18 @@ import os
 import sys
 from pathlib import Path
 
-# Add project root to path
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+# Add project root to Python path
+BASE_DIR = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(BASE_DIR))
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, HTMLResponse
+from fastapi.staticfiles import StaticFiles
 from contextlib import asynccontextmanager
-from mangum import Mangum
 
 from app.database import create_db_and_tables
 from app.routers import resume
-
-# Project root directory
-BASE_DIR = Path(__file__).resolve().parent.parent
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -37,21 +35,23 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Mount static files
+static_dir = BASE_DIR / "static"
+if static_dir.exists():
+    app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
+
+# Include your routers
 app.include_router(resume.router)
 
 @app.get("/", response_class=HTMLResponse)
 async def root():
     index_path = BASE_DIR / "static" / "index.html"
     if index_path.exists():
-        return FileResponse(index_path)
-    return HTMLResponse("<h1>index.html not found</h1>")
+        return FileResponse(str(index_path))
+    return HTMLResponse("<h1>Welcome - index.html not found</h1>")
 
 @app.get("/health")
 async def health_check():
     return {"status": "healthy"}
 
-handler = Mangum(app, lifespan="off")
-
-@app.get("/favicon.ico")
-async def favicon():
-    return FileResponse(BASE_DIR / "static" / "favicon.ico") if (BASE_DIR / "static" / "favicon.ico").exists() else HTMLResponse(status_code=204)
+# NO Mangum needed - Vercel's @vercel/python handles ASGI natively now
