@@ -14,11 +14,17 @@ def get_groq_client():
         raise ValueError("GROQ_API_KEY environment variable is not set!")
     return Groq(api_key=api_key)
 
+
 def parse_resume_with_ai(resume_text: str) -> ParsedResume:
     """Use Groq AI to parse resume text into structured data"""
     
     # Yahan client initialize karein
     client = get_groq_client()
+    
+    # Resume text ko limit karo (bahut bara text slow karta hai)
+    # Pehle 8000 characters kaafi hain resume ke liye
+    if len(resume_text) > 8000:
+        resume_text = resume_text[:8000]
     
     prompt = f"""
     You are a resume parser. Extract the following information from this resume text:
@@ -28,7 +34,7 @@ def parse_resume_with_ai(resume_text: str) -> ParsedResume:
     - skills (list of technical and soft skills)
     - experience_years (total years of experience as integer)
     - education (list of degrees/institutions)
-    - summary (brief professional summary)
+    - summary (brief professional summary, max 2 sentences)
     
     Resume text:
     {resume_text}
@@ -47,13 +53,13 @@ def parse_resume_with_ai(resume_text: str) -> ParsedResume:
     
     try:
         completion = client.chat.completions.create(
-            model="llama-3.3-70b-versatile",
+            model="llama-3.1-8b-instant",  # ⚡ Faster model (was: llama-3.3-70b-versatile)
             messages=[
                 {"role": "system", "content": "You are a helpful assistant that extracts structured data from resumes. Return only valid JSON."},
                 {"role": "user", "content": prompt}
             ],
             temperature=0.1,
-            max_tokens=1000,
+            max_tokens=800,  # Reduced from 1000 for faster response
             response_format={"type": "json_object"}
         )
         
@@ -62,7 +68,10 @@ def parse_resume_with_ai(resume_text: str) -> ParsedResume:
     
     except Exception as e:
         print(f"AI parsing error: {e}")
+        import traceback
+        traceback.print_exc()
         return extract_basic_info(resume_text)
+
 
 def extract_basic_info(text: str) -> ParsedResume:
     """Fallback: Basic regex-based extraction"""

@@ -55,35 +55,16 @@ function handleFile(file) {
     document.getElementById('dropZone').style.display = 'none';
 }
 
-async function uploadResume() {
-    if (!selectedFile) {
-        showError('Please select a file first');
-        return;
+{
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/api/index.py" }
+  ],
+  "functions": {
+    "api/index.py": {
+      "maxDuration": 60
     }
-    
-    showLoading();
-    
-    const formData = new FormData();
-    formData.append('file', selectedFile);
-    
-    try {
-        const response = await fetch('/resume/parse-file', {
-            method: 'POST',
-            body: formData
-        });
-        
-        if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.detail || 'Failed to parse resume');
-        }
-        
-        const data = await response.json();
-        displayResult(data);
-    } catch (error) {
-        showError(error.message);
-    }
+  }
 }
-
 async function parseText() {
     const text = document.getElementById('resumeText').value.trim();
     
@@ -103,18 +84,25 @@ async function parseText() {
             body: `text=${encodeURIComponent(text)}`
         });
         
+        const responseText = await response.text();
+        
         if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.detail || 'Failed to parse resume');
+            let errorMsg = `Server error (${response.status})`;
+            try {
+                const errorJson = JSON.parse(responseText);
+                errorMsg = errorJson.detail || errorMsg;
+            } catch {
+                errorMsg = responseText.substring(0, 200) || errorMsg;
+            }
+            throw new Error(errorMsg);
         }
         
-        const data = await response.json();
+        const data = JSON.parse(responseText);
         displayResult(data);
     } catch (error) {
-        showError(error.message);
+        showError(error.message || 'Something went wrong');
     }
 }
-
 function displayResult(data) {
     document.getElementById('loading').style.display = 'none';
     document.getElementById('resultSection').style.display = 'block';
