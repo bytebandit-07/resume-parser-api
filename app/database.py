@@ -1,16 +1,21 @@
+from sqlmodel import SQLModel, create_engine, Session
 import os
-from sqlmodel import create_engine, SQLModel
 
-# Agar Vercel par hai toh In-Memory DB use karo (no files created)
-if os.environ.get("VERCEL") or os.environ.get("VERCEL_ENV"):
-    sqlite_url = "sqlite:///:memory:"
+# Check if running on Vercel or Locally
+if os.getenv("VERCEL"):
+    DATABASE_URL = "sqlite:///:memory:"
 else:
-    # Local development ke liye file banayega
-    sqlite_file_name = "resume_database.db"
-    sqlite_url = f"sqlite:///{sqlite_file_name}"
+    DATABASE_URL = "sqlite:///./resumes.db"
 
-connect_args = {"check_same_thread": False}
-engine = create_engine(sqlite_url, connect_args=connect_args)
+engine = create_engine(DATABASE_URL, echo=False, connect_args={"check_same_thread": False})
 
 def create_db_and_tables():
-    SQLModel.metadata.create_all(engine)
+    try:
+        SQLModel.metadata.create_all(engine)
+    except Exception as e:
+        print(f"Database creation error: {e}")
+        pass  # Serverless environment me errors ignore karein
+
+def get_session():
+    with Session(engine) as session:
+        yield session

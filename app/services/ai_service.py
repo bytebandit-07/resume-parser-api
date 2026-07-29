@@ -1,5 +1,6 @@
 import os
 import json
+import re
 from groq import Groq
 from dotenv import load_dotenv
 from app.models.schemas import ParsedResume
@@ -65,7 +66,6 @@ def parse_resume_with_ai(resume_text: str) -> ParsedResume:
 
 def extract_basic_info(text: str) -> ParsedResume:
     """Fallback: Basic regex-based extraction"""
-    import re
     
     email_pattern = r'[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}'
     phone_pattern = r'\+?\d{10,15}'
