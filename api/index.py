@@ -1,34 +1,34 @@
 import os
 import sys
+from pathlib import Path
 
-# Add the root directory to path so imports like 'from app.database' work
+# Add project root to path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse
+from fastapi.responses import FileResponse, HTMLResponse
 from contextlib import asynccontextmanager
 from mangum import Mangum
 
-# Import from your 'app' folder
 from app.database import create_db_and_tables
 from app.routers import resume
 
+# Project root directory
+BASE_DIR = Path(__file__).resolve().parent.parent
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Skip DB creation on Vercel (read-only filesystem)
     if not os.getenv("VERCEL"):
         create_db_and_tables()
     yield
 
 app = FastAPI(
     title="AI Resume Parser API",
-    description="Parse resumes using AI to extract structured information",
     version="1.0.0",
     lifespan=lifespan
 )
 
-# CORS middleware
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -37,17 +37,21 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Include routers
 app.include_router(resume.router)
 
-@app.get("/")
+@app.get("/", response_class=HTMLResponse)
 async def root():
-    return HTMLResponse(content="<h1>AI Resume Parser is Live! 🚀<br>Visit <a href='/docs'>/docs</a> for API documentation.</h1>")
+    index_path = BASE_DIR / "static" / "index.html"
+    if index_path.exists():
+        return FileResponse(index_path)
+    return HTMLResponse("<h1>index.html not found</h1>")
 
 @app.get("/health")
 async def health_check():
     return {"status": "healthy"}
 
-# Mangum handler for Vercel Serverless deployment
-# Vercel's Python builder looks for 'handler'
 handler = Mangum(app, lifespan="off")
+
+@app.get("/favicon.ico")
+async def favicon():
+    return FileResponse(BASE_DIR / "static" / "favicon.ico") if (BASE_DIR / "static" / "favicon.ico").exists() else HTMLResponse(status_code=204)
