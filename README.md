@@ -20,7 +20,7 @@ An intelligent, full-stack web application that automates resume screening by ex
 -  **Structured Output:** Returns clean, validated JSON containing Name, Email, Phone, Skills, Experience, Education, and Professional Summary.
 -  **Modern UI:** Responsive, drag-and-drop frontend built with vanilla HTML/CSS/JS (no heavy frameworks required).
 -  **Serverless Optimized:** Deployed on Vercel with optimized timeout handling and in-memory database fallback for instant scalability.
--  **Robust Error Handling:** Graceful fallbacks (regex-based extraction) if the AI service temporarily fails.
+-  **Robust Error Handling:** Graceful fallbacks (regex-based extraction) if the AI service temporarily fails..
 
 ---
 
