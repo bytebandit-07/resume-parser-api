@@ -53,7 +53,7 @@ def parse_resume_with_ai(resume_text: str) -> ParsedResume:
     
     try:
         completion = client.chat.completions.create(
-            model="llama-3.3-70b-versatile",  # ⚡ Faster model (was: llama-3.3-70b-versatile)
+            model="openai/gpt-oss-20b",  # ⚡ Faster model (was: llama-3.3-70b-versatile)
             messages=[
                 {"role": "system", "content": "You are a helpful assistant that extracts structured data from resumes. Return only valid JSON."},
                 {"role": "user", "content": prompt}
