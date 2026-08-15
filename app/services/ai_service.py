@@ -7,7 +7,6 @@ from app.models.schemas import ParsedResume
 
 load_dotenv()
 
-# Client ko function ke andar banayenge taake import time par crash na ho
 def get_groq_client():
     api_key = os.getenv("GROQ_API_KEY")
     if not api_key:
@@ -18,52 +17,43 @@ def get_groq_client():
 def parse_resume_with_ai(resume_text: str) -> ParsedResume:
     """Use Groq AI to parse resume text into structured data"""
     
-    # Yahan client initialize karein
     client = get_groq_client()
     
-    # Resume text ko limit karo (bahut bara text slow karta hai)
-    # Pehle 8000 characters kaafi hain resume ke liye
-    if len(resume_text) > 8000:
-        resume_text = resume_text[:8000]
+    # Limit resume text (rakho reasonable size)
+    if len(resume_text) > 6000:
+        resume_text = resume_text[:6000]
     
-    prompt = f"""
-    You are a resume parser. Extract the following information from this resume text:
-    - name (full name)
-    - email
-    - phone
-    - skills (list of technical and soft skills)
-    - experience_years (total years of experience as integer)
-    - education (list of degrees/institutions)
-    - summary (brief professional summary, max 2 sentences)
-    
-    Resume text:
-    {resume_text}
-    
-    Return ONLY valid JSON in this exact format:
-    {{
-        "name": "string or null",
-        "email": "string or null",
-        "phone": "string or null",
-        "skills": ["skill1", "skill2"],
-        "experience_years": number or null,
-        "education": ["education1", "education2"],
-        "summary": "string or null"
-    }}
-    """
+    # Shorter, more direct prompt
+    prompt = f"""Extract resume information as JSON.
+
+Resume:
+{resume_text}
+
+Return ONLY this JSON structure:
+{{"name":"...","email":"...","phone":"...","skills":["..."],"experience_years":0,"education":["..."],"summary":"..."}}"""
     
     try:
         completion = client.chat.completions.create(
-            model="openai/gpt-oss-20b",  # ⚡ Faster model (was: llama-3.3-70b-versatile)
+            model="openai/gpt-oss-20b",
             messages=[
-                {"role": "system", "content": "You are a helpful assistant that extracts structured data from resumes. Return only valid JSON."},
+                {"role": "system", "content": "You extract resume data as JSON. Return only valid JSON, no markdown, no explanations."},
                 {"role": "user", "content": prompt}
             ],
             temperature=0.1,
-            max_tokens=800,  # Reduced from 1000 for faster response
+            max_tokens=2000,  # ✅ INCREASED from 800 to 2000
             response_format={"type": "json_object"}
         )
         
-        result = json.loads(completion.choices[0].message.content)
+        content = completion.choices[0].message.content.strip()
+        
+        # Clean markdown if present
+        if content.startswith("```"):
+            content = content.split("```")[1]
+            if content.startswith("json"):
+                content = content[4:]
+            content = content.strip()
+        
+        result = json.loads(content)
         return ParsedResume(**result)
     
     except Exception as e:
